@@ -1,10 +1,10 @@
-import { JSONValue, Message, ToolInvocation } from 'ai'
-import { useMemo } from 'react'
-import { AnswerSection } from './answer-section'
-import { ReasoningSection } from './reasoning-section'
-import RelatedQuestions from './related-questions'
-import { ToolSection } from './tool-section'
-import { UserMessage } from './user-message'
+import { JSONValue, Message, ToolInvocation } from 'ai';
+import { useMemo } from 'react';
+import { AnswerSection } from './answer-section';
+import { ReasoningSection } from './reasoning-section';
+import RelatedQuestions from './related-questions';
+import { ToolSection } from './tool-section';
+import { UserMessage } from './user-message';
 
 interface RenderMessageProps {
   message: Message

@@ -1,12 +1,9 @@
-import { JSONValue, Message } from 'ai'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { RenderMessage } from './render-message'
-import { ToolSection } from './tool-section'
-import { Spinner } from './ui/spinner'
+import { Message } from 'ai';
+import { useEffect, useRef, useState } from 'react';
+import { RenderMessage } from './render-message';
 
 interface ChatMessagesProps {
   messages: Message[]
-  data: JSONValue[] | undefined
   onQuerySelect: (query: string) => void
   isLoading: boolean
   chatId?: string
@@ -14,7 +11,6 @@ interface ChatMessagesProps {
 
 export function ChatMessages({
   messages,
-  data,
   onQuerySelect,
   isLoading,
   chatId
@@ -41,31 +37,6 @@ export function ChatMessages({
       setOpenStates({ [manualToolCallId]: true })
     }
   }, [messages])
-
-  // get last tool data for manual tool call
-  const lastToolData = useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) return null
-
-    const lastItem = data[data.length - 1] as {
-      type: 'tool_call'
-      data: {
-        toolCallId: string
-        state: 'call' | 'result'
-        toolName: string
-        args: string
-      }
-    }
-
-    if (lastItem.type !== 'tool_call') return null
-
-    const toolData = lastItem.data
-    return {
-      state: 'call' as const,
-      toolCallId: toolData.toolCallId,
-      toolName: toolData.toolName,
-      args: toolData.args ? JSON.parse(toolData.args) : undefined
-    }
-  }, [data])
 
   if (!messages.length) return null
 
@@ -106,17 +77,6 @@ export function ChatMessages({
           />
         </div>
       ))}
-      {showLoading &&
-        (lastToolData ? (
-          <ToolSection
-            key={manualToolCallId}
-            tool={lastToolData}
-            isOpen={getIsOpen(manualToolCallId)}
-            onOpenChange={open => handleOpenChange(manualToolCallId, open)}
-          />
-        ) : (
-          <Spinner />
-        ))}
       <div ref={messagesEndRef} /> {/* Add empty div as scroll anchor */}
     </div>
   )

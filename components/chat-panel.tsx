@@ -1,17 +1,16 @@
 'use client'
 
-import { Model } from '@/lib/types/models'
-import { cn } from '@/lib/utils'
-import { Message } from 'ai'
-import { ArrowUp, MessageCirclePlus, Square } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
-import Textarea from 'react-textarea-autosize'
-import { EmptyScreen } from './empty-screen'
-import { ModelSelector } from './model-selector'
-import { SearchModeToggle } from './search-mode-toggle'
-import { Button } from './ui/button'
-import { IconLogo } from './ui/icons'
+// import { Model } from '@/lib/types/models';
+import { cn } from '@/lib/utils';
+import { Message } from 'ai';
+import { ArrowUp, MessageCirclePlus, Square } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import Textarea from 'react-textarea-autosize';
+import { EmptyScreen } from './empty-screen';
+// import { ModelSelector } from './model-selector';
+import { Button } from './ui/button';
+import { IconLogo } from './ui/icons';
 
 interface ChatPanelProps {
   input: string
@@ -23,7 +22,6 @@ interface ChatPanelProps {
   query?: string
   stop: () => void
   append: (message: any) => void
-  models?: Model[]
 }
 
 export function ChatPanel({
@@ -35,8 +33,7 @@ export function ChatPanel({
   setMessages,
   query,
   stop,
-  append,
-  models
+  append
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
@@ -132,10 +129,10 @@ export function ChatPanel({
 
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <ModelSelector models={models || []} />
               <SearchModeToggle />
-            </div>
+            </div>*/}
             <div className="flex items-center gap-2">
               {messages.length > 0 && (
                 <Button

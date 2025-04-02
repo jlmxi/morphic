@@ -83,7 +83,8 @@ export function getModel(model: string) {
     })
   }
 
-  return registry.languageModel(model)
+  // Cast the model string to the expected type:
+  return registry.languageModel(model as Parameters<typeof registry.languageModel>[0]);
 }
 
 export function isProviderEnabled(providerId: string): boolean {
