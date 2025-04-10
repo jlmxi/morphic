@@ -1,12 +1,12 @@
 'use client'
 
-import { CHAT_ID } from '@/lib/constants'
-import { cn } from '@/lib/utils'
-import { useChat } from 'ai/react'
-import { Copy } from 'lucide-react'
-import { toast } from 'sonner'
-import { ChatShare } from './chat-share'
-import { Button } from './ui/button'
+import { CHAT_ID } from '@/lib/constants';
+import { cn } from '@/lib/utils';
+import { useChatWS } from '@/lib/websocket/use-chatws';
+import { Copy } from 'lucide-react';
+import { toast } from 'sonner';
+import { ChatShare } from './chat-share';
+import { Button } from './ui/button';
 
 interface MessageActionsProps {
   message: string
@@ -21,7 +21,8 @@ export function MessageActions({
   enableShare,
   className
 }: MessageActionsProps) {
-  const { isLoading } = useChat({
+  const { isLoading } = useChatWS({
+    url: 'wss://xi-development.flowfuse.cloud/morphic',
     id: CHAT_ID
   })
   async function handleCopy() {

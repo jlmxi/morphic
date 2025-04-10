@@ -1,4 +1,4 @@
-import { CoreMessage, JSONValue } from 'ai'
+import { Message } from '@/lib/message';
 
 export type SearchResults = {
   images: SearchResultImage[]
@@ -17,44 +17,10 @@ export type SearchResultImage =
       number_of_results?: number
     }
 
-export type ExaSearchResults = {
-  results: ExaSearchResultItem[]
-}
-
-export type SerperSearchResults = {
-  searchParameters: {
-    q: string
-    type: string
-    engine: string
-  }
-  videos: SerperSearchResultItem[]
-}
-
 export type SearchResultItem = {
   title: string
   url: string
   content: string
-}
-
-export type ExaSearchResultItem = {
-  score: number
-  title: string
-  id: string
-  url: string
-  publishedDate: Date
-  author: string
-}
-
-export type SerperSearchResultItem = {
-  title: string
-  link: string
-  snippet: string
-  imageUrl: string
-  duration: string
-  source: string
-  channel: string
-  date: string
-  position: number
 }
 
 export interface Chat extends Record<string, any> {
@@ -63,14 +29,8 @@ export interface Chat extends Record<string, any> {
   createdAt: Date
   userId: string
   path: string
-  messages: ExtendedCoreMessage[] // Note: Changed from AIMessage to ExtendedCoreMessage
+  messages: Message[]
   sharePath?: string
-}
-
-// ExtendedCoreMessage for saveing annotations
-export type ExtendedCoreMessage = Omit<CoreMessage, 'role' | 'content'> & {
-  role: CoreMessage['role'] | 'data'
-  content: CoreMessage['content'] | JSONValue
 }
 
 export type AIMessage = {
@@ -90,26 +50,24 @@ export type AIMessage = {
     | 'end'
 }
 
-export interface SearXNGResult {
+export type SerperSearchResults = {
+  searchParameters: {
+    q: string
+    type: string
+    engine: string
+  }
+  videos: SerperSearchResultItem[]
+}
+
+export type SerperSearchResultItem = {
   title: string
-  url: string
-  content: string
-  img_src?: string
-  publishedDate?: string
-  score?: number
+  link: string
+  snippet: string
+  imageUrl: string
+  duration: string
+  source: string
+  channel: string
+  date: string
+  position: number
 }
 
-export interface SearXNGResponse {
-  query: string
-  number_of_results: number
-  results: SearXNGResult[]
-}
-
-export type SearXNGImageResult = string
-
-export type SearXNGSearchResults = {
-  images: SearXNGImageResult[]
-  results: SearchResultItem[]
-  number_of_results?: number
-  query: string
-}

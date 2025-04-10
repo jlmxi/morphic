@@ -1,14 +1,11 @@
 'use client'
 
-// import { Model } from '@/lib/types/models';
+import { Message } from '@/lib/message';
 import { cn } from '@/lib/utils';
-import { Message } from 'ai';
 import { ArrowUp, MessageCirclePlus, Square } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import Textarea from 'react-textarea-autosize';
-import { EmptyScreen } from './empty-screen';
-// import { ModelSelector } from './model-selector';
 import { Button } from './ui/button';
 import { IconLogo } from './ui/icons';
 
@@ -35,7 +32,6 @@ export function ChatPanel({
   stop,
   append
 }: ChatPanelProps) {
-  const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isFirstRender = useRef(true)
@@ -105,7 +101,6 @@ export function ChatPanel({
             className="resize-none w-full min-h-12 bg-transparent border-0 px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             onChange={e => {
               handleInputChange(e)
-              setShowEmptyScreen(e.target.value.length === 0)
             }}
             onKeyDown={e => {
               if (
@@ -123,16 +118,10 @@ export function ChatPanel({
                 textarea.form?.requestSubmit()
               }
             }}
-            onFocus={() => setShowEmptyScreen(true)}
-            onBlur={() => setShowEmptyScreen(false)}
           />
 
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
-            {/* <div className="flex items-center gap-2">
-              <ModelSelector models={models || []} />
-              <SearchModeToggle />
-            </div>*/}
             <div className="flex items-center gap-2">
               {messages.length > 0 && (
                 <Button
@@ -159,17 +148,6 @@ export function ChatPanel({
             </div>
           </div>
         </div>
-
-        {messages.length === 0 && (
-          <EmptyScreen
-            submitMessage={message => {
-              handleInputChange({
-                target: { value: message }
-              } as React.ChangeEvent<HTMLTextAreaElement>)
-            }}
-            className={cn(showEmptyScreen ? 'visible' : 'invisible')}
-          />
-        )}
       </form>
     </div>
   )

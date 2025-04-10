@@ -1,11 +1,11 @@
 'use client'
 
-import { Section, ToolArgsSection } from '@/components/section'
-import { SearchResults } from '@/components/search-results'
-import { SearchResults as SearchResultsType } from '@/lib/types'
-import { ToolInvocation } from 'ai'
-import { DefaultSkeleton } from './default-skeleton'
-import { CollapsibleMessage } from './collapsible-message'
+import { SearchResults } from '@/components/search-results';
+import { Section, ToolArgsSection } from '@/components/section';
+import { ToolInvocation } from '@/lib/message';
+import { SearchResults as SearchResultsType } from '@/lib/types';
+import { CollapsibleMessage } from './collapsible-message';
+import { DefaultSkeleton } from './default-skeleton';
 
 interface RetrieveSectionProps {
   tool: ToolInvocation

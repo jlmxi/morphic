@@ -34,14 +34,19 @@ export class WebSocketManager {
       } catch (e) {
         data = event.data;
       }
-      
-      // Log the received message details for debugging
+    
       console.log("Received message:", data);
-      if (data && data.payload && data.payload.images) {
-        console.log(`Received images payload with ${data.payload.images.length} images`);
-      }
-  
-      // Call all registered message handlers with the parsed data
+    
+      // if (Array.isArray(data)) {
+      //   data.forEach((msg) => {
+      //     this.messageHandlers.forEach((handler) => handler(msg));
+      //   });
+      // } else {
+      //   this.messageHandlers.forEach((handler) => handler(data));
+      // }
+
+      // Simply call all registered message handlers with the data,
+      // leaving it up to the handler to process arrays vs. single messages.
       this.messageHandlers.forEach((handler) => handler(data));
     };
   

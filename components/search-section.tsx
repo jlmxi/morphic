@@ -1,14 +1,12 @@
 'use client'
 
-import { CHAT_ID } from '@/lib/constants'
-import type { SearchResults as TypeSearchResults } from '@/lib/types'
-import { ToolInvocation } from 'ai'
-import { useChat } from 'ai/react'
-import { CollapsibleMessage } from './collapsible-message'
-import { SearchSkeleton } from './default-skeleton'
-import { SearchResults } from './search-results'
-import { SearchResultsImageSection } from './search-results-image'
-import { Section, ToolArgsSection } from './section'
+import { ToolInvocation } from '@/lib/message';
+import type { SearchResults as TypeSearchResults } from '@/lib/types';
+import { CollapsibleMessage } from './collapsible-message';
+import { SearchSkeleton } from './default-skeleton';
+import { SearchResults } from './search-results';
+import { SearchResultsImageSection } from './search-results-image';
+import { Section, ToolArgsSection } from './section';
 
 interface SearchSectionProps {
   tool: ToolInvocation
@@ -21,23 +19,16 @@ export function SearchSection({
   isOpen,
   onOpenChange
 }: SearchSectionProps) {
-  const { isLoading } = useChat({
-    id: CHAT_ID
-  })
   const isToolLoading = tool.state === 'call'
-  const searchResults: TypeSearchResults =
-    tool.state === 'result' ? tool.result : undefined
+  const searchResults: TypeSearchResults = tool.state === 'result' ? tool.result : undefined
   const query = tool.args?.query as string | undefined
   const includeDomains = tool.args?.includeDomains as string[] | undefined
-  const includeDomainsString = includeDomains
-    ? ` [${includeDomains.join(', ')}]`
-    : ''
+  const includeDomainsString = includeDomains ? ` [${includeDomains.join(', ')}]` : ''
 
   const header = (
-    <ToolArgsSection
-      tool="search"
-      number={searchResults?.results?.length}
-    >{`${query}${includeDomainsString}`}</ToolArgsSection>
+    <ToolArgsSection tool="search" number={searchResults?.results?.length}>
+      {`${query}${includeDomainsString}`}
+    </ToolArgsSection>
   )
 
   return (
@@ -58,7 +49,7 @@ export function SearchSection({
             />
           </Section>
         )}
-      {isLoading && isToolLoading ? (
+      {isToolLoading ? (
         <SearchSkeleton />
       ) : searchResults?.results ? (
         <Section title="Sources">

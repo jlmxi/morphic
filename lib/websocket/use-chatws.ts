@@ -1,59 +1,98 @@
-import { generateId as generateIdFunc } from '@ai-sdk/ui-utils'; // or your custom id generator
-import type { Message } from 'ai';
+import type { Message } from '@/lib/message';
+import { generateId as generateIdFunc } from '@/lib/utils/generate-id';
 import { useEffect, useRef, useState } from 'react';
 import { WebSocketManager } from './websocket-manager';
 
 interface UseChatWSOptions {
-  url: string;           // The WebSocket URL (e.g. "wss://your-backend.example.com/chat")
-  id?: string;           // Chat id for the session, optional now
+  url: string;           // The WebSocket URL
+  id?: string;           // Chat id for the session, optional
   initialMessages?: Message[];
 }
 
+// Global map for reusing WebSocketManager instances by URL.
+const wsManagers: Record<string, WebSocketManager> = {};
+
 export function useChatWS({ url, id, initialMessages = [] }: UseChatWSOptions) {
-  // Generate an id if none is provided
+  // Generate an id if none is provided.
   const [hookId] = useState(() => id || generateIdFunc());
   const chatId = id ?? hookId;
 
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    initialMessages.map((msg) => ({ ...msg, groupId: msg.groupId || msg.id }))
+  );
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Store our WebSocketManager instance in a ref so it persists across renders
+  // Use a ref to store the shared WebSocketManager instance.
   const wsRef = useRef<WebSocketManager | null>(null);
 
   useEffect(() => {
-    // Initialize the connection
-    wsRef.current = new WebSocketManager(url);
+    // If a WebSocketManager for this URL doesn't exist, create one.
+    if (!wsManagers[url]) {
+      wsManagers[url] = new WebSocketManager(url);
+      console.log("Created new WS for URL:", url);
+    } else {
+      console.log("Reusing WS for URL:", url);
+    }
+    wsRef.current = wsManagers[url];
     const ws = wsRef.current;
 
-    // Listen for incoming messages from the backend.
-    ws.addMessageHandler((data: any) => {
-      if (data.type === 'message') {
-        // Append the incoming message (which might be from the assistant)
-        setMessages((prev) => [...prev, data.payload]);
-        setIsLoading(false);
+    // Define your message handler.
+    const messageHandler = (data: any) => {
+      let newMessages: Message[] = [];
+      if (Array.isArray(data)) {
+        // Use the id of the first message as the groupId.
+        const groupId = data[0]?.id;
+        newMessages = data.map((msg: Message) => ({
+          ...msg,
+          groupId,
+        }));
+      } else {
+        newMessages = [{ ...data, groupId: data.id }];
       }
-      // Handle other types of messages (e.g. updates, tool calls) as needed.
-    });
+      // Update the flat messages array:
+      setMessages((prev) => {
+        const updated = [...prev];
+        newMessages.forEach((newMsg) => {
+          const idx = updated.findIndex((m) => m.id === newMsg.id);
+          if (idx !== -1) {
+            updated[idx] = newMsg;
+          } else {
+            updated.push(newMsg);
+          }
+        });
+        return updated;
+      });
+      setIsLoading(false);
+    };
 
-    ws.addErrorHandler((err: any) => {
+    // Add the message handler to our shared WebSocket.
+    ws.addMessageHandler(messageHandler);
+
+    // Define an error handler.
+    const errorHandler = (err: any) => {
       console.error("WebSocket encountered an error", err);
       setError(new Error("WebSocket error"));
       setIsLoading(false);
-    });
+    };
+    ws.addErrorHandler(errorHandler);
 
+    // Do not disconnect the WebSocket on unmount since we want it to be reused.
+    // Optionally, you could remove your handlers here if your WebSocketManager supports it.
     return () => {
-      // Clean up the connection when the component using the hook unmounts.
-      ws.disconnect();
+      // For a robust solution, you might want to remove this handler from ws here.
+      // For now, we leave it so that the global WS persists.
     };
   }, [url]);
 
-  // Append a message and send it over the WebSocket
+  // Append a message and send it over the WebSocket.
+  // Here we treat a new user message as its own group.
   const append = (message: Message) => {
-    setMessages((prev) => [...prev, message]);
+    const msgWithGroup = { ...message, groupId: message.id };
+    setMessages((prev) => [...prev, msgWithGroup]);
     if (wsRef.current) {
-      wsRef.current.send({ type: 'message', payload: message, chatId });
+      wsRef.current.send({ type: 'message', payload: msgWithGroup, chatId });
     }
   };
 
@@ -61,26 +100,24 @@ export function useChatWS({ url, id, initialMessages = [] }: UseChatWSOptions) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim()) return;
-
     const userMessage: Message = {
       id: `${Date.now()}`,
       role: 'user',
       content: input,
       createdAt: new Date(),
     };
-
     setIsLoading(true);
     append(userMessage);
     setInput('');
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setInput(e.target.value);
   };
 
-  // A dummy stop implementation – you might want to send a “stop” command over the WS.
+  // Dummy stop implementation.
   const stop = () => {
     if (wsRef.current) {
       wsRef.current.send({ type: 'stop', chatId });
@@ -88,7 +125,7 @@ export function useChatWS({ url, id, initialMessages = [] }: UseChatWSOptions) {
     }
   };
 
-  // A simple reload function that might, for instance, request the server to re-send the last reply.
+  // Simple reload: remove last assistant message and send a reload command.
   const reload = () => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage && lastMessage.role === 'assistant') {
@@ -106,7 +143,7 @@ export function useChatWS({ url, id, initialMessages = [] }: UseChatWSOptions) {
     input,
     isLoading,
     error,
-    setMessages, // Exposed in case you need to update messages externally
+    setMessages, // Exposed for external updates.
     append,
     handleInputChange,
     handleSubmit,

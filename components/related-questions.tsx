@@ -1,13 +1,13 @@
 'use client'
 
-import { CHAT_ID } from '@/lib/constants'
-import { JSONValue } from 'ai'
-import { useChat } from 'ai/react'
-import { ArrowRight, Repeat2 } from 'lucide-react'
-import React from 'react'
-import { CollapsibleMessage } from './collapsible-message'
-import { Button } from './ui/button'
-import { Skeleton } from './ui/skeleton'
+import { CHAT_ID } from '@/lib/constants';
+import { JSONValue } from '@/lib/message';
+import { useChatWS } from '@/lib/websocket/use-chatws';
+import { ArrowRight, Repeat2 } from 'lucide-react';
+import React from 'react';
+import { CollapsibleMessage } from './collapsible-message';
+import { Button } from './ui/button';
+import { Skeleton } from './ui/skeleton';
 
 export interface RelatedQuestionsProps {
   annotations: JSONValue[]
@@ -29,7 +29,8 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   isOpen,
   onOpenChange
 }) => {
-  const { isLoading } = useChat({
+  const { isLoading } = useChatWS({
+    url: 'wss://xi-development.flowfuse.cloud/morphic',
     id: CHAT_ID
   })
 

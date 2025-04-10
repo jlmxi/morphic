@@ -1,156 +1,85 @@
-import { JSONValue, Message, ToolInvocation } from 'ai';
-import { useMemo } from 'react';
+import { Message } from '@/lib/message';
 import { AnswerSection } from './answer-section';
-import { ReasoningSection } from './reasoning-section';
-import RelatedQuestions from './related-questions';
 import { ToolSection } from './tool-section';
 import { UserMessage } from './user-message';
 
 interface RenderMessageProps {
-  message: Message
-  messageId: string
-  getIsOpen: (id: string) => boolean
-  onOpenChange: (id: string, open: boolean) => void
-  onQuerySelect: (query: string) => void
-  chatId?: string
+  message: Message;
+  getIsOpen: (id: string) => boolean;
+  onOpenChange: (id: string, open: boolean) => void;
+  onQuerySelect: (query: string) => void;
+  chatId?: string;
 }
 
 export function RenderMessage({
   message,
-  messageId,
   getIsOpen,
   onOpenChange,
   onQuerySelect,
-  chatId
+  chatId,
 }: RenderMessageProps) {
-  const relatedQuestions = useMemo(
-    () =>
-      message.annotations?.filter(
-        annotation => (annotation as any)?.type === 'related-questions'
-      ),
-    [message.annotations]
-  )
 
-  // Render for manual tool call
-  const toolData = useMemo(() => {
-    const toolAnnotations =
-      (message.annotations?.filter(
-        annotation =>
-          (annotation as unknown as { type: string }).type === 'tool_call'
-      ) as unknown as Array<{
-        data: {
-          args: string
-          toolCallId: string
-          toolName: string
-          result?: string
-          state: 'call' | 'result'
-        }
-      }>) || []
-
-    const toolDataMap = toolAnnotations.reduce((acc, annotation) => {
-      const existing = acc.get(annotation.data.toolCallId)
-      if (!existing || annotation.data.state === 'result') {
-        acc.set(annotation.data.toolCallId, {
-          ...annotation.data,
-          args: annotation.data.args ? JSON.parse(annotation.data.args) : {},
-          result:
-            annotation.data.result && annotation.data.result !== 'undefined'
-              ? JSON.parse(annotation.data.result)
-              : undefined
-        } as ToolInvocation)
-      }
-      return acc
-    }, new Map<string, ToolInvocation>())
-
-    return Array.from(toolDataMap.values())
-  }, [message.annotations])
-
-  // Extract the unified reasoning annotation directly.
-  const reasoningAnnotation = useMemo(() => {
-    const annotations = message.annotations as any[] | undefined
-    if (!annotations) return null
-    return (
-      annotations.find(a => a.type === 'reasoning' && a.data !== undefined) ||
-      null
-    )
-  }, [message.annotations])
-
-  // Extract the reasoning time and reasoning content from the annotation.
-  // If annotation.data is an object, use its fields. Otherwise, default to a time of 0.
-  const reasoningTime = useMemo(() => {
-    if (!reasoningAnnotation) return 0
-    if (
-      typeof reasoningAnnotation.data === 'object' &&
-      reasoningAnnotation.data !== null
-    ) {
-      return reasoningAnnotation.data.time ?? 0
-    }
-    return 0
-  }, [reasoningAnnotation])
-
+  // For a user message, content conatins the message text:
+  // from chat-panel.tsx
+    // if query is not empty, submit the query
+    // useEffect(() => {
+    //   if (isFirstRender.current && query && query.trim().length > 0) {
+    //     append({
+    //       role: 'user',
+    //       content: query
+    //     })
+    //     isFirstRender.current = false
+    //   }
+    // }, [query])  
   if (message.role === 'user') {
-    return <UserMessage message={message.content} />
+    return <UserMessage message={message.content} />;
   }
 
-  // New way: Use parts instead of toolInvocations
-  return (
-    <>
-      {toolData.map(tool => (
+  if (message.role === 'assistant') {
+    if (message.content.type === 'text') {
+      return (
+        <AnswerSection
+          content={message.content.text}
+          isOpen={getIsOpen(message.id)}
+          onOpenChange={(open) => onOpenChange(message.id, open)}
+          chatId={chatId}
+        />
+      );
+    }
+  }
+
+  if (message.role === 'tool') {
+    if (message.content.type === 'tool-call') {
+      return (
         <ToolSection
-          key={tool.toolCallId}
-          tool={tool}
-          isOpen={getIsOpen(tool.toolCallId)}
-          onOpenChange={open => onOpenChange(tool.toolCallId, open)}
+          tool={{
+            toolCallId: message.content.toolCallId,
+            toolName: message.content.toolName,
+            args: message.content.args || {},
+            state: 'call',
+          }}
+          isOpen={getIsOpen(message.id)}
+          onOpenChange={(open) => onOpenChange(message.id, open)}
         />
-      ))}
-      {message.parts?.map((part, index) => {
-        switch (part.type) {
-          case 'tool-invocation':
-            return (
-              <ToolSection
-                key={`${messageId}-tool-${index}`}
-                tool={part.toolInvocation}
-                isOpen={getIsOpen(part.toolInvocation.toolCallId)}
-                onOpenChange={open =>
-                  onOpenChange(part.toolInvocation.toolCallId, open)
-                }
-              />
-            )
-          case 'text':
-            return (
-              <AnswerSection
-                key={`${messageId}-text-${index}`}
-                content={part.text}
-                isOpen={getIsOpen(messageId)}
-                onOpenChange={open => onOpenChange(messageId, open)}
-                chatId={chatId}
-              />
-            )
-          case 'reasoning':
-            return (
-              <ReasoningSection
-                key={`${messageId}-reasoning-${index}`}
-                content={{
-                  reasoning: part.reasoning,
-                  time: reasoningTime
-                }}
-                isOpen={getIsOpen(messageId)}
-                onOpenChange={open => onOpenChange(messageId, open)}
-              />
-            )
-          // Add other part types as needed
-          default:
-            return null
-        }
-      })}
-      {relatedQuestions && relatedQuestions.length > 0 && (
-        <RelatedQuestions
-          annotations={relatedQuestions as JSONValue[]}
-          onQuerySelect={onQuerySelect}
-          isOpen={getIsOpen(`${messageId}-related`)}
-          onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
+      );
+    }
+    if (message.content.type === 'tool-result') {
+      return (
+        <ToolSection
+          tool={{
+            toolCallId: message.content.toolCallId,
+            toolName: message.content.toolName,
+            args: message.content.args || {},
+            result: message.content.result,
+            state: 'result',
+          }}
+          isOpen={getIsOpen(message.id)}
+          onOpenChange={(open) => onOpenChange(message.id, open)}
         />
-      )}
-    </>
-  )
+      );
+    }
+  }
+
+  // Fallback: render nothing if format is not supported.
+  return null;
 }
