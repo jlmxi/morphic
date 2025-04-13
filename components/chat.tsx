@@ -28,6 +28,7 @@ export function Chat({
     stop,
     append,
     setInput,
+    sendMessage,
     error
   } = useChatWS({
     url: 'wss://xi-development.flowfuse.cloud/morphic',
@@ -80,6 +81,21 @@ export function Chat({
     });
   };
 
+  // Send a system "init" message once both config and sessionId are available.
+  useEffect(() => {
+    console.log('[Chat] sendMessage config:', config);
+    console.log('[Chat] sendMessage sessionId:', sessionId);
+    if (config && sessionId) {
+      const content = {
+        type: 'init',
+        sessionId,                     // sessionId from state
+        client: config.client,         // client from config
+        clientId: config.clientId      // clientId from config
+      };
+      sendMessage('init', 'system', content);
+    }
+  }, [config, sessionId, sendMessage]);
+  
   // Only render the chat UI after both config and sessionId are available.
   if (!config || !sessionId) {
     return (

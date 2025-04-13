@@ -137,6 +137,23 @@ export function useChatWS({ url, id, initialMessages = [] }: UseChatWSOptions) {
     }
   };
 
+  const sendMessage = (messageType: string, role: string, content: any) => {
+    if (wsRef.current) {
+      const payload = {
+        id: `${Date.now()}`,
+        role,
+        content,
+        createdAt: new Date().toISOString(),
+      };
+
+      wsRef.current.send({
+        type: messageType,
+        payload,
+        chatId,
+      });
+    }
+  };
+
   return {
     id: chatId,
     messages,
@@ -150,5 +167,6 @@ export function useChatWS({ url, id, initialMessages = [] }: UseChatWSOptions) {
     stop,
     reload,
     setInput,
+    sendMessage,
   };
 }
